@@ -98,3 +98,14 @@ test("volume values are left out until known", () => {
   assert.strictEqual(el.tabIndex, -1);
   assert.match(el.title, /only works for Spotify/);
 });
+
+test("keyedDebounce keeps a separate pending update for each slider", () => {
+  const timers = [], sent = [];
+  const fake = { setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout: id => { if (id) timers[id - 1] = null; } };
+  const send = Sliders.keyedDebounce((key, value) => sent.push([key, value]), 120, fake);
+  send("bright", 40);
+  send("vol", 0.5);
+  send("bright", 60); // replaces only the earlier brightness update
+  timers.forEach(fn => fn && fn());
+  assert.deepStrictEqual(sent, [["vol", 0.5], ["bright", 60]]);
+});

@@ -30,7 +30,15 @@
     }
     el.title = available ? "Spotify volume" : "Volume only works for Spotify";
   }
-  const api = { sliderDelta, syncSeek, syncVolume };
+  // one trailing debounce per key, so moving one slider never cancels another slider's pending update
+  function keyedDebounce(fn, ms, timers = { setTimeout, clearTimeout }) {
+    const pending = new Map();
+    return (key, value) => {
+      timers.clearTimeout(pending.get(key));
+      pending.set(key, timers.setTimeout(() => { pending.delete(key); fn(key, value); }, ms));
+    };
+  }
+  const api = { sliderDelta, syncSeek, syncVolume, keyedDebounce };
   if (typeof module !== "undefined") module.exports = api;
   else window.Sliders = api;
 })();
