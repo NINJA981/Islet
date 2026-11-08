@@ -97,7 +97,10 @@
   // custom: {id, sheet, rows} draws that sprite sheet instead of the cat
   function paint(els, mood, custom) {
     for (const el of els) {
-      if (el.dataset.kind !== (custom ? "custom" : "cat") || (custom && el.dataset.petId !== custom.id)) {
+      // a pack re-imported under the same id has a new sheet and maybe a new row count; the sheet is compared
+      // as the same string object on every later call, so an unchanged pack costs nothing
+      const stale = custom && (el.dataset.petId !== custom.id || el._petSheet !== custom.sheet || el.dataset.rows !== String(custom.rows));
+      if (el.dataset.kind !== (custom ? "custom" : "cat") || stale) {
         el.dataset.kind = custom ? "custom" : "cat";
         el.dataset.petId = custom ? custom.id : "";
         el.innerHTML = custom ? "" : SVG;
@@ -106,7 +109,8 @@
           el.style.backgroundImage = custom ? `url("${custom.sheet}")` : "";
           el.style.backgroundSize = custom ? `800% ${custom.rows * 100}%` : "";
         }
-        if (custom) el.dataset.rows = custom.rows;
+        if (custom) el.dataset.rows = String(custom.rows);
+        el._petSheet = custom ? custom.sheet : null;
         el.dataset.mood = "";
       }
       if (el.dataset.mood === mood) continue;
