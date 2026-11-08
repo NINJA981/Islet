@@ -485,7 +485,8 @@ ipcMain.handle("search", (_, q) => {
   const items = [
     ...appIndex.map(a => ({ id: "app:" + (a.appId || a.file), title: a.name, sub: "App", kind: "app", file: a.file, appId: a.appId })),
     ...universalSearch.COMMANDS.map(c => ({ ...c, kind: "command" })),
-    ...(config.clipboardHistory ? clipStore().view().map((c, i) => ({ id: "clip:" + i, title: oneLine(c.text), sub: "Clipboard: copy again", kind: "clip", text: c.text })) : []),
+    // view() only carries a flattened 160-character preview; copy and match the full text, read now so a later reorder can't change what a result copies
+    ...(config.clipboardHistory ? clipStore().view().map((_, i) => { const text = clipStore().text(i); return { id: "clip:" + i, title: oneLine(text), keywords: [text], sub: "Clipboard: copy again", kind: "clip", text }; }) : []),
     ...notes.map((l, i) => ({ id: "note:" + i, title: oneLine(l), sub: "Note: copy line", kind: "note", text: l })),
   ];
   const top = universalSearch.withFiles(universalSearch.rank(q, items, 8), universalSearch.rank(q, fileIndex, 3, 60)); // files must contain what was typed
